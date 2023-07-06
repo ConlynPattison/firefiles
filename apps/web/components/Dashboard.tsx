@@ -1,4 +1,12 @@
-import { Box, Center, Divider, Text, useColorMode, Button, Grid } from "@chakra-ui/react";
+import {
+	Box,
+	Center,
+	Divider,
+	Text,
+	useColorMode,
+	Button,
+	Grid,
+} from "@chakra-ui/react";
 import UploadFileButton from "@components/files/UploadFileButton";
 import FolderBreadCrumbs from "@components/folders/FolderBreadCrumbs";
 import Navbar from "@components/ui/Navbar";
@@ -12,6 +20,9 @@ import UploadProgress from "./files/UploadProgress";
 import GridView from "./GridView";
 import ListView from "./ListView";
 import { DriveFile } from "@util/types";
+import { sortDriveFiles } from "@util/helpers/file-sorting";
+import { SortFilterConfig } from "@util/types";
+
 
 const baseStyle = {
 	outline: "none",
@@ -34,17 +45,16 @@ const Dashboard = () => {
 	const { colorMode } = useColorMode();
 	const style = useMemo(() => ({ ...baseStyle, ...(isDragging ? activeStyle : {}) }), [isDragging]);
 	const [gridView, setGridView] = useState(false);
-	const [fileSort, setFileSort] = useState("name");
-	const [isAscending, setIsAscending] = useState(true);
+	// const [fileSort, setFileSort] = useState("name");
+	// const [isAscending, setIsAscending] = useState(true);
+	const [fileFilters, setFileFilters] = useState<SortFilterConfig>({property: "name", isAscending: true});
 
 	useEffect(() => {
 		const storedView = localStorage.getItem("grid_view");
-		const storedSort = localStorage.getItem("file_sort");
-		const storedOrder = localStorage.getItem("is_ascending");
+		const storedFilterConfig = JSON.parse(localStorage.getItem("file_filter_config"));
 
 		if (storedView) setGridView(storedView === "true");
-		if (storedSort) setFileSort(storedSort);
-		if (storedOrder) setIsAscending(storedOrder === "true");
+		if (storedFilterConfig) setFileFilters(storedFilterConfig);
 	}, []);
 
 	useEffect(() => {
@@ -52,23 +62,9 @@ const Dashboard = () => {
 	}, [gridView]);
 
 	useEffect(() => {
-		localStorage.setItem("file_sort", fileSort.toString());
-	}, [fileSort]);
+		localStorage.setItem("file_filter_config", fileFilters.toString());
+	}, [fileFilters]);
 
-	useEffect(() => {
-		localStorage.setItem("is_ascending", isAscending.toString());
-	}, [isAscending]);
-
-	const sortByProperty = () => {
-		const sortOrder = isAscending ? 1 : -1;
-		files?.sort((a: DriveFile, b: DriveFile) => {
-			return a[fileSort] < b[fileSort]
-				? -1 * sortOrder
-				: a[fileSort] > b[fileSort]
-				? 1 * sortOrder
-				: 0;
-		});
-	};
 
 	return (
 		<>
@@ -124,15 +120,15 @@ const Dashboard = () => {
 								]}
 								gap={[2, 6, 6]}
 							>
-								<Button onClick={() => setFileSort("name")}>Name</Button>
-								<Button onClick={() => setFileSort("size")}>Size</Button>
-								<Button onClick={() => setFileSort("createdAt")}>Created At</Button>
-								<Button onClick={() => setIsAscending((prevIsAscending) => !prevIsAscending)}>
-									{isAscending ? "DESC" : "ASC"}
+								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'name'})}>Name</Button>
+								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'size'})}>Size</Button>
+								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'createdAt'})}>Created At</Button>
+								<Button onClick={() => setFileFilters({...fileFilters, ['isAscending']: !fileFilters.isAscending})}>
+									{fileFilters.isAscending ? "DESC" : "ASC"}
 								</Button>
 							</Grid>
 							{/* This is likely where the sort will be done? */}
-							{files?.length > 0 && sortByProperty()}
+							{files?.length > 0 && sortDriveFiles(files, fileFilters)}
 							{!gridView ? (
 								<ListView
 									loading={loading}

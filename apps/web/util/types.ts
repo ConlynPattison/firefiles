@@ -47,3 +47,8 @@ export type DriveFolder = {
 	createdAt?: string;
 	updatedAt?: string;
 };
+
+export type SortFilterConfig = {
+    property: ('name' | 'size' | 'createdAt' | 'updatedAt');
+    isAscending: boolean;
+}
