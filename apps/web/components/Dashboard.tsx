@@ -45,16 +45,16 @@ const Dashboard = () => {
 	const { colorMode } = useColorMode();
 	const style = useMemo(() => ({ ...baseStyle, ...(isDragging ? activeStyle : {}) }), [isDragging]);
 	const [gridView, setGridView] = useState(false);
-	// const [fileSort, setFileSort] = useState("name");
-	// const [isAscending, setIsAscending] = useState(true);
-	const [fileFilters, setFileFilters] = useState<SortFilterConfig>({property: "name", isAscending: true});
+	const [fileSort, setFileSort] = useState<SortFilterConfig>({property: "name", isAscending: true});
 
 	useEffect(() => {
 		const storedView = localStorage.getItem("grid_view");
-		const storedFilterConfig = JSON.parse(localStorage.getItem("file_filter_config"));
+		const storedFileSort = localStorage.getItem("file_sort");
 
 		if (storedView) setGridView(storedView === "true");
-		if (storedFilterConfig) setFileFilters(storedFilterConfig);
+		if (storedFileSort) {
+			setFileSort(JSON.parse(storedFileSort));
+		}
 	}, []);
 
 	useEffect(() => {
@@ -62,8 +62,8 @@ const Dashboard = () => {
 	}, [gridView]);
 
 	useEffect(() => {
-		localStorage.setItem("file_filter_config", fileFilters.toString());
-	}, [fileFilters]);
+		localStorage.setItem("file_sort", JSON.stringify(fileSort));
+	}, [fileSort]);
 
 
 	return (
@@ -111,24 +111,7 @@ const Dashboard = () => {
 							<Navbar />
 							<FolderBreadCrumbs currentFolder={currentFolder} />
 							<Divider />
-							{/* Temporary buttons/elements used for logic dev */}
-							<Grid
-								templateColumns={[
-									"repeat(auto-fill, minmax(140px, 1fr))",
-									"repeat(auto-fill, minmax(160px, 1fr))",
-									"repeat(auto-fill, minmax(160px, 1fr))",
-								]}
-								gap={[2, 6, 6]}
-							>
-								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'name'})}>Name</Button>
-								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'size'})}>Size</Button>
-								<Button onClick={() => setFileFilters({...fileFilters, ['property']: 'createdAt'})}>Created At</Button>
-								<Button onClick={() => setFileFilters({...fileFilters, ['isAscending']: !fileFilters.isAscending})}>
-									{fileFilters.isAscending ? "DESC" : "ASC"}
-								</Button>
-							</Grid>
-							{/* This is likely where the sort will be done? */}
-							{files?.length > 0 && sortDriveFiles(files, fileFilters)}
+							{files?.length > 0 && sortDriveFiles(files, fileSort)}
 							{!gridView ? (
 								<ListView
 									loading={loading}
@@ -137,6 +120,8 @@ const Dashboard = () => {
 									folders={folders}
 									setGridView={setGridView}
 									setIsFolderDeleting={setIsFolderDeleting}
+									setFileSort={setFileSort}
+									fileSort={fileSort}
 								/>
 							) : (
 								<GridView
@@ -146,6 +131,8 @@ const Dashboard = () => {
 									folders={folders}
 									setGridView={setGridView}
 									setIsFolderDeleting={setIsFolderDeleting}
+									setFileSort={setFileSort}
+									fileSort={fileSort}
 								/>
 							)}
 						</Box>
